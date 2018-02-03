@@ -12,7 +12,7 @@ Then create a file listing the locations of the description files for your netwo
 ../descriptions/en-fr-2.desc.t7
 ```
 
-Then invoke `python correlations.py --descriptions myfile.txt`.
+Then invoke `python correlations.py --descriptions myfile.txt --output my_results.json`.
 
 If you want to run correlation-min instead of correlation-max, add the --min flag: `python correlations.py --descriptions myfile.txt --min`.
 '''

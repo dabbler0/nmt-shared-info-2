@@ -1,3 +1,20 @@
+'''
+FIND NEURONS IN NETWORKS PREDICTABLE WITH LINEAR REGRESSION
+
+To use, generate description files using `describe.lua` from here: https://github.com/dabbler0/nmt-shared-information.
+
+Then create a file listing the locations of the description files for your networks. For instance, I might create a file `myfile.txt` that reads:
+
+```
+../descriptions/en-es-1.desc.t7
+../descriptions/en-es-2.desc.t7
+../descriptions/en-fr-1.desc.t7
+../descriptions/en-fr-2.desc.t7
+```
+
+Then invoke `python correlations.py --descriptions myfile.txt --output my_results.json`.
+'''
+
 import torch
 import numpy
 import json
