@@ -6,24 +6,22 @@ from numpy import newaxis as na
 from torch.utils.serialization import load_lua
 from itertools import product as p
 
-whiten_dimensions = True
+import argparse
 
-languages = ['es', 'fr', 'ar', 'ru', 'zh']
+parser = argparse.ArgumentParser(description='Run svcca analysis')
+parser.add_argument('--descriptions', dest='descriptions', description='File with list of locations of description files (one per line)')
+parser.add_argument('--output', dest='output', description='Output file')
+parser.add_argument('--normalize_dimensions', dest='normalize_dimensions', description='Add flag to normalize dimensions first', action='store_const', const=True, default=False)
+parser.add_argument('--percent_variance', dest='percent_variance', type=float, description='Percentage of variance to take in initial PCA')
 
-all_networks = {}
+args = parser.parse_args()
 
-for language, version in tqdm(p(languages, [1, 2, 3]), desc='loading', total=len(languages) * 3):
-    network_name = 'en-%s-%d' % (language, version)
-
-    # Load the description of the network
-    # This will be a 4000x(sentence_length)x500 matrix.
-    # Rehsape to be a (total_tokens)x500 matrix.
-    all_networks[network_name] = torch.cat(load_lua(
-        '../descriptions/%s.desc.t7' % (network_name,)
-    )).cuda()
+# Load all the descriptions of networks
+with open(parser.descriptions) as f:
+    all_networks = {line: torch.cat(load_lua(line).cuda() for line in f}
 
 # Whiten dimensions
-if whiten_dimensions:
+if args.normalize_dimensions:
     for network in tqdm(all_networks, desc='mu, sigma'):
         all_networks[network] -= all_networks[network].mean(0)
         all_networks[network] /= all_networks[network].std(0)
@@ -42,7 +40,7 @@ for network in tqdm(all_networks, desc='pca'):
 
     # Figure out how many dimensions account for 99% of the variance
     var_sums = torch.cumsum(se, 0)
-    wanted_size = torch.sum(var_sums.lt(var_sums[-1] * 0.99))
+    wanted_size = torch.sum(var_sums.lt(var_sums[-1] * args.percent_variance))
 
     print('For network', network, 'wanted size is', wanted_size)
 
@@ -67,17 +65,6 @@ for a, b in tqdm(p(all_networks, all_networks), desc = 'cca', total = len(all_ne
     X = torch.mm(X, whitening_transforms[a])
     Y = torch.mm(Y, whitening_transforms[b])
 
-    # Verify that everything is correct here.
-    '''
-    print('Verifying the correctness of the whitening.')
-    print('MEAN:')
-    print(X.mean(0)[:10])
-    print('STD:')
-    print(X.std(0)[:10])
-    print('SELF-CORRELATION:')
-    print(torch.mm(X.t(), X)[:10, :10] / (X.size()[0] - 1))
-    '''
-
     # Get a correlation matrix
     correlation_matrix = torch.mm(X.t(), Y) / (X.size()[0] - 1)
 
@@ -94,4 +81,4 @@ for a, b in tqdm(p(all_networks, all_networks), desc = 'cca', total = len(all_ne
         b: whitening_transforms[b].mm(v)
     }
 
-torch.save(transforms, 'svcca-99.pkl')
+torch.save(transforms, args.output)

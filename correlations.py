@@ -29,6 +29,7 @@ from itertools import product as p
 parser = argparse.ArgumentParser(description = 'Run correlation analysis')
 parser.add_argument('--min', dest='pool', action='store_const', const=min, default=max)
 parser.add_argument('--descriptions', dest='descriptions', description = 'File with list of locations of description files (one per line)')
+parser.add_argument('--output', dest='output', description = 'Output file')
 
 args = parser.parse_args()
 
@@ -111,4 +112,4 @@ for network in tqdm(all_networks, desc='annotation'):
         for neuron in neuron_sort
     ]
 
-json.dump(neuron_notated_sort, open('results/annotated-clusters-min.json', 'w'), indent = 4)
+json.dump(neuron_notated_sort, open(args.output, 'w'), indent = 4)

@@ -6,16 +6,17 @@ from numpy import newaxis as na
 from torch.utils.serialization import load_lua
 from itertools import product as p
 
-languages = ['es', 'fr', 'ar', 'ru', 'zh']
+import argparse
 
-all_networks = {}
+parser = argparse.ArgumentParser(description = 'Run linreg analysis')
+parser.add_argument('--descriptions', dest='descriptions', description = 'File with list of locations of description files (one per line)')
+parser.add_argument('--output', dest='output', description = 'Output file')
 
-for language, version in tqdm(p(languages, [1, 2, 3]), desc='loading', total=len(languages) * 3):
-    network_name = 'en-%s-%d' % (language, version)
+args = parser.parse_args()
 
-    all_networks[network_name] = torch.cat(load_lua(
-        '../descriptions/%s.desc.t7' % (network_name,)
-    )).cuda()
+# Load all the descriptions of networks
+with open(parser.descriptions) as f:
+    all_networks = {line: torch.cat(load_lua(line).cuda() for line in f}
 
 # Normalize to have mean 0 and standard devaition 1.
 means = {}
@@ -73,4 +74,4 @@ for network in tqdm(all_networks, desc='annotation'):
         for neuron in neuron_sort
     ]
 
-json.dump(neuron_notated_sort, open('results/most-predictable.json', 'w'), indent = 4)
+json.dump(neuron_notated_sort, open(args.output, 'w'), indent = 4)
