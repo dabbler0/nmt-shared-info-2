@@ -1,0 +1,54 @@
+<html>
+    <head>
+    </head>
+    <body>
+        <div id="sentence">
+            <textarea id="sentence-inp"></textarea>
+        </div>
+        <div id="modify">
+            <textarea id="modifications"></textarea>
+        </div>
+        <div id="go">
+            <button id="go-btn">Go</button>
+        </div>
+        <div id="output">
+        </div>
+
+<script>
+function get(url, callback) {
+    var q = new XMLHttpRequest();
+    q.open('GET', url, true);
+    q.onreadystatechange = function() {
+        if (q.readyState === 4) {
+            callback(q.responseText);
+        }
+    };
+    q.send();
+}
+
+document.getElementById('go-btn').addEventListener('click', () => {
+    var sentence = document.getElementById('sentence-inp').value;
+    var modifications = document.getElementById('modifications').value.split('\n')
+        .filter((x) => { return x.trim().length > 1; }).map((line) =>
+        {
+            var pos = line.split(':')[0], val = line.split(':')[1];
+            val = Number(val);
+            pos = pos.split(',').map(Number);
+            return {'position': pos, 'value': val}
+        }
+    );
+
+    console.log(modifications);
+
+    get('/modify?sentence=' + encodeURIComponent(sentence) +
+            '&modifications=' + encodeURIComponent(JSON.stringify(modifications)), (result) =>
+        {
+            result = JSON.parse(result);
+            document.getElementById("output").innerText = result.pred;
+        });
+
+});
+
+</script>
+    </body>
+</html>

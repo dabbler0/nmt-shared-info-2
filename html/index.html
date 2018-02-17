@@ -1,0 +1,238 @@
+<html>
+    <head>
+<style>
+span.token {
+    font-family: monospace;
+    /*margin-right: 1em;*/
+}
+div.sentence {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid #000;
+}
+td.token {
+    font-family: monospace;
+}
+td.token-score {
+    margin-left: 10px;
+}
+table#info-summary {
+    width: 100%;
+}
+table#info-summary td {
+    vertical-align: top;
+}
+div#token-variance, div#position-neuron {
+    border-bottom: 1px solid #000;
+}
+</style>
+<script>
+
+// Smoothing factor to use for individual token interpretation.
+// There are 4000 total sentences. We will assume a baseline rate
+// of one appearance every 100 sentences.
+var SMOOTHING_FACTOR = 4;
+
+function get(url, callback) {
+    var q = new XMLHttpRequest();
+    q.open('GET', url, true);
+    q.onreadystatechange = function() {
+        if (q.readyState === 4) {
+            callback(q.responseText);
+        }
+    };
+    q.send();
+}
+
+get('/lines.txt', function(lines) {
+    // Lines
+    var lines = lines.split('\n').map(function(x) { return x.split(' '); });
+
+    var elements = [];
+
+    // Append lines
+    var list = document.getElementById('list');
+    lines.forEach(function(line) {
+        var lineElement = document.createElement('div');
+        var lineArray = [];
+        lineElement.className = 'sentence';
+        line.forEach(function(token) {
+            var tokenElement = document.createElement('span');
+            tokenElement.innerText = token + ' ';
+            tokenElement.className = 'token';
+            lineElement.appendChild(tokenElement);
+            lineArray.push(tokenElement);
+        });
+        list.appendChild(lineElement);
+        elements.push(lineArray);
+    });
+
+    // Function to generate background color
+    // from given activation
+    function createBackgroundColor(x) {
+        if (x < 0) {
+            // Blue, scales as 2^x
+            var proportion = Math.pow(2, x);
+            //var value = Math.floor((1 - proportion) * 256).toString(16);
+            var value = Math.round(proportion * 255);
+
+            return 'rgb(' + value + ', ' + value + ', 255)'
+        }
+        else {
+            // Positive, red, scales as 2^-x
+            var proportion = Math.pow(2, -x);
+            //var value = Math.floor((1 - proportion) * 256).toString(16);
+            var value = Math.round(proportion * 255);
+
+            return 'rgb(255,' + value + ', ' + value + ')'
+        }
+    }
+
+    var canvas = document.getElementById('length-plot-canvas');
+    var ctx = canvas.getContext('2d');
+    canvas.width = canvas.height = 500;
+
+    // Bind
+    document.getElementById('neuron-identifier').addEventListener('keydown', function(event) {
+        if (event.which == 13) {
+            document.getElementById('indicator').innerText = 'Loading...';
+            var identifier = document.getElementById('neuron-identifier').value;
+
+            get('/activations?neuron=' + encodeURIComponent(identifier), function(data) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.globalAlpha = 0.1;
+                data = JSON.parse(data);
+
+                var activations = data.activations;
+                var mean = data.mean;
+                var variance = data.variance;
+
+                var max_len = Math.max.apply(this, activations.map(function(x) { return x.length; }));
+
+                // Is it a position neuron/is it an individual token neuron?
+                // Determine using summary.
+                var individual_token_sums = {};
+                var position_neuron_sums = {};
+                var individual_token_counts = {};
+                var position_neuron_counts = {};
+
+                activations.forEach(function(line, i) {
+                    line.forEach(function(x, j) {
+                        ctx.fillRect(
+                            (j / max_len) * canvas.width,
+                            ((x - mean) / (10 * variance) + 0.5) * canvas.height,
+                            2,
+                            2
+                        );
+                        elements[i][j].style.backgroundColor =
+                            createBackgroundColor((x - mean) / variance);
+                        elements[i][j].title = (x - mean) / variance;
+
+                        // Record activation for summaries
+                        individual_token_sums[lines[i][j]] =
+                            individual_token_sums[lines[i][j]] || 0;
+                        individual_token_sums[lines[i][j]] += (x - mean) / variance;
+
+                        individual_token_counts[lines[i][j]] =
+                            individual_token_counts[lines[i][j]] || 0;
+                        individual_token_counts[lines[i][j]] += 1;
+
+                        position_neuron_sums[j] =
+                            position_neuron_sums[j] || 0;
+                        position_neuron_sums[j] += (x - mean) / variance;
+
+                        position_neuron_counts[j] =
+                            position_neuron_counts[j] || 0;
+                        position_neuron_counts[j] += 1;
+                    });
+                });
+
+                // Get top tokens
+                var all_tokens = [];
+                for (var key in individual_token_sums) {
+                    all_tokens.push(key);
+                    individual_token_sums[key] /= (individual_token_counts[key] + SMOOTHING_FACTOR);
+                }
+
+                all_tokens.sort(function(a, b) {
+                    if (Math.abs(individual_token_sums[a]) >
+                            Math.abs(individual_token_sums[b])) {
+                        return -1;
+                    }
+                    else {
+                        return 1;
+                    }
+                });
+
+                // Get score summaries in the form of conditional variances
+                var conditional_variance = 0;
+                var token_variance = 0;
+                var total_count = 0;
+
+                activations.forEach(function(line, i) {
+                    line.forEach(function(x, j) {
+                        total_count += 1;
+                        conditional_variance += Math.pow(
+                            (x - mean) / variance -
+                            position_neuron_sums[j] / position_neuron_counts[j],
+                            2
+                        );
+                        token_variance += Math.pow(
+                            (x - mean) / variance -
+                            individual_token_sums[lines[i][j]],
+                            2
+                        );
+                    });
+                });
+
+                conditional_variance /= total_count;
+                token_variance /= total_count;
+
+                // Fill out table.
+                document.getElementById('indicator').innerText = 'Done.';
+
+                document.getElementById('top-tokens').innerHTML = all_tokens.slice(0, 20).map(
+                function(x) {
+                    return '<tr>' +
+                        '<td class="token"><span style="background-color:' +
+                        createBackgroundColor(individual_token_sums[x]) +
+                        '">' + x + '</span>' +
+                        '</td><td class="token-score">' +
+                        individual_token_sums[x].toPrecision(3) +
+                        '</td></tr>'
+                }).join('');
+
+                document.getElementById('position-neuron').innerText = 'Variance Attributable To Position: ' + ((1 - conditional_variance) * 100).toPrecision(2) + '%';
+                document.getElementById('token-variance').innerText = 'Variance Attributable To Tokens: ' + ((1 - token_variance) * 100).toPrecision(2) + '%';
+            });
+        }
+    });
+});
+</script>
+    </head>
+    <body>
+        <div id="inputs">
+            <input id="neuron-identifier"> <span id="indicator"></span>
+        </div>
+        <table id="info-summary">
+            <tr>
+                <td>Position</td>
+                <td>Individual Tokens</td>
+            </tr>
+            <tr>
+                <td>
+                <div id="length-plot">
+                    <div id="position-neuron"></div>
+                    <canvas id="length-plot-canvas"></canvas>
+                </div>
+                </td>
+                <td>
+                    <div id="token-variance"></div>
+                    <table id="top-tokens"></table>
+                </td>
+            </tr>
+        </table>
+        <div id="list">
+        </div>
+    </body>
+</html>
