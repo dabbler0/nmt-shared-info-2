@@ -10,13 +10,14 @@ from torch.utils.serialization import load_lua
 from itertools import product as p
 from tqdm import tqdm
 import json
+import os
 
 languages = ['es', 'fr', 'ar', 'ru', 'zh']
 
 networks = {}
 
 with open(args.descriptions) as f:
-    network_fnames = [line for line in f]
+    network_fnames = [line.strip() for line in f]
 
 for fname in tqdm(network_fnames):
     nname = os.path.split(fname)[1]
