@@ -19,8 +19,8 @@ with open(args.descriptions) as f:
     network_fnames = [line for line in f]
 
 for fname in tqdm(network_fnames):
-    nname = os.path.split(fname)
-    nname = nname[:nname.index('.')
+    nname = os.path.split(fname)[1]
+    nname = nname[:nname.index('.')]
 
     # Load as 4000x(sentence_length)x500 matrix
     networks[nname] = load_lua(fname)

@@ -29,9 +29,11 @@ LOAD NETWORKS
 with open(args.descriptions) as f:
     network_fnames = [line for line in f]
 
+all_networks = {}
+
 for fname in tqdm(network_fnames):
-    network_name = os.path.split(fname)
-    network_name = network_name[:network_name.index('.')
+    network_name = os.path.split(fname)[1]
+    network_name = network_name[:network_name.index('.')]
 
     # Load as 4000x(sentence_length)x500 matrix
     all_networks[network_name] = load_lua(fname)

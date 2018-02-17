@@ -25,25 +25,28 @@ from tqdm import tqdm
 from numpy import newaxis as na
 from torch.utils.serialization import load_lua
 from itertools import product as p
+import os
 
 parser = argparse.ArgumentParser(description = 'Run correlation analysis')
 parser.add_argument('--min', dest='pool', action='store_const', const=min, default=max)
-parser.add_argument('--descriptions', dest='descriptions', description = 'File with list of locations of description files (one per line)')
-parser.add_argument('--output', dest='output', description = 'Output file')
+parser.add_argument('--descriptions', dest='descriptions', help = 'File with list of locations of description files (one per line)')
+parser.add_argument('--output', dest='output', help = 'Output file')
 
 args = parser.parse_args()
 
 # Load all the descriptions of networks
 # Get list of network filenames
 with open(args.descriptions) as f:
-    network_fnames = [line for line in f]
+    network_fnames = [line.strip() for line in f]
+
+all_networks = {}
 
 for fname in tqdm(network_fnames):
-    network_name = os.path.split(fname)
-    network_name = network_name[:network_name.index('.')
+    network_name = os.path.split(fname)[1]
+    network_name = network_name[:network_name.index('.')]
 
     # Load as 4000x(sentence_length)x500 matrix
-    all_networks[network_name] = load_lua(fname)
+    all_networks[network_name] = torch.cat(load_lua(fname))
 
 '''
 Correlation-finding code. This should probably not need to be modified for ordinary use.
