@@ -13,11 +13,12 @@ from torch.utils.serialization import load_lua
 from itertools import product as p
 import codecs
 import argparse
+import os
 
 parser = argparse.ArgumentParser(description='Visualization and dissection server')
-parser.add_argument('descriptions', help='List of description files, one per line')
-parser.add_argument('svcca_location', help='.pkl file output by svcca.py')
-parser.add_argument('source_file', help='tokenized source file for the description files')
+parser.add_argument('--descriptions', help='List of description files, one per line')
+parser.add_argument('--svcca', help='.pkl file output by svcca.py')
+parser.add_argument('--source', help='tokenized source file for the description files')
 
 args = parser.parse_args()
 
@@ -27,7 +28,7 @@ LOAD NETWORKS
 
 # Get list of network filenames
 with open(args.descriptions) as f:
-    network_fnames = [line for line in f]
+    network_fnames = [line.strip() for line in f]
 
 all_networks = {}
 
@@ -42,7 +43,7 @@ means = {}
 variances = {}
 
 # transforms
-cca_transforms = torch.load(args.svcca_location)
+cca_transforms = torch.load(args.svcca)
 
 # Get means and variances
 for network in tqdm(all_networks, desc = 'norm, pca'):
@@ -73,7 +74,7 @@ class VisualizationServer(BaseHTTPRequestHandler):
         '': 'html/index.html',
         '/': 'html/index.html',
         '/modify.html': 'html/modify.html',
-        '/lines.txt': args.source_file
+        '/lines.txt': args.source
     }
 
     MIME_TYPES = {

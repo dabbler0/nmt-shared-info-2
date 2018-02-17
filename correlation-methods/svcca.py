@@ -30,7 +30,7 @@ parser = argparse.ArgumentParser(description='Run svcca analysis')
 parser.add_argument('--descriptions', dest='descriptions', help='File with list of locations of description files (one per line)')
 parser.add_argument('--output', dest='output', help='Output file')
 parser.add_argument('--normalize_dimensions', dest='normalize_dimensions', help='Add flag to normalize dimensions first', action='store_const', const=True, default=False)
-parser.add_argument('--percent_variance', dest='percent_variance', type=float, help='Percentage of variance to take in initial PCA')
+parser.add_argument('--percent_variance', dest='percent_variance', type=float, help='Percentage of variance to take in initial PCA', default=0.99)
 
 args = parser.parse_args()
 
