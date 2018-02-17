@@ -116,15 +116,15 @@ class VisualizationServer(BaseHTTPRequestHandler):
 
             current_loaded_subprocess = subprocess.Popen(
                 [   '/home/anthony/torch/install/bin/th',
-                    '/home/anthony/sls/seq2seq-attn/dissect.lua',
-                    '-model', '/home/anthony/sls/models/%s-model_final.t7' % model_name,
-                    '-src_file', '/home/anthony/sls/data/testsets/tokenized-test/en.tok',
-                    '-src_dict', '/home/anthony/sls/dicts/%s.src.dict' % model_name,
-                    '-targ_dict', '/home/anthony/sls/dicts/%s.targ.dict' % model_name,
+                    'TODO/seq2seq-attn/dissect.lua',
+                    '-model', 'TODO/models/%s-model_final.t7' % model_name,
+                    '-src_file', 'TODO/data/testsets/tokenized-test/en.tok',
+                    '-src_dict', 'TODO/dicts/%s.src.dict' % model_name,
+                    '-targ_dict', 'TODO/dicts/%s.targ.dict' % model_name,
                     '-replace_unk', '1',
                     '-gpuid', '1'
                 ],
-                cwd = '/home/anthony/sls/seq2seq-attn/',
+                cwd = 'TODO/seq2seq-attn/',
                 stdin = PIPE,
                 stdout = PIPE
             )
