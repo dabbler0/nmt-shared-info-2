@@ -34,8 +34,16 @@ parser.add_argument('--output', dest='output', description = 'Output file')
 args = parser.parse_args()
 
 # Load all the descriptions of networks
-with open(parser.descriptions) as f:
-    all_networks = {line: torch.cat(load_lua(line).cuda() for line in f}
+# Get list of network filenames
+with open(args.descriptions) as f:
+    network_fnames = [line for line in f]
+
+for fname in tqdm(network_fnames):
+    network_name = os.path.split(fname)
+    network_name = network_name[:network_name.index('.')
+
+    # Load as 4000x(sentence_length)x500 matrix
+    all_networks[network_name] = load_lua(fname)
 
 '''
 Correlation-finding code. This should probably not need to be modified for ordinary use.
