@@ -46,7 +46,7 @@ for fname in tqdm(network_fnames):
     network_name = network_name[:network_name.index('.')]
 
     # Load as 4000x(sentence_length)x500 matrix
-    all_networks[network_name] = torch.cat(load_lua(fname))
+    all_networks[network_name] = torch.cat(load_lua(fname)['encodings'])
 
 '''
 Correlation-finding code. This should probably not need to be modified for ordinary use.
