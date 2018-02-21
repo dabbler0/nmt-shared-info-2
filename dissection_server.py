@@ -49,7 +49,7 @@ for fname, mname, sdict, tdict in tqdm(network_fnames):
     targ_dicts[network_name] = os.path.abspath(tdict)
 
     # Load as 4000x(sentence_length)x500 matrix
-    all_networks[network_name] = load_lua(fname)['encodings']
+    all_networks[network_name] = load_lua(fname)#['encodings']
 
 means = {}
 variances = {}
