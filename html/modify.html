@@ -1,18 +1,43 @@
 <html>
     <head>
+<style>
+#modify-wrapper {
+    margin-top: 10px;
+}
+
+#sentence, #modify, #sentence-inp, #modifications {
+    width: 100%;
+}
+
+#output {
+    font-family: monospace;
+    border: 1px solid #888;
+}
+</style>
     </head>
     <body>
-        <div id="sentence">
-            <textarea id="sentence-inp"></textarea>
-        </div>
-        <div id="modify">
-            <textarea id="modifications"></textarea>
-        </div>
-        <div id="go">
-            <button id="go-btn">Go</button>
-        </div>
-        <div id="output">
-        </div>
+
+<!-- initialization things -->
+<div>
+<input id="network-name" placeholder="network-name"/>
+<button id="initialize">Initialize</button>
+<span id="status">Not initialized.</span>
+</div>
+
+<!-- modification things -->
+<div id="modify-wrapper">
+    <div id="sentence">
+        <textarea id="sentence-inp" placeholder="input sentence"></textarea>
+    </div>
+    <div id="modify">
+        <textarea id="modifications" placeholder="modifications in form pos, neuron: value"></textarea>
+    </div>
+    <div id="go">
+        <button id="go-btn">Translate</button>
+    </div>
+    <div id="output">
+    </div>
+</div>
 
 <script>
 function get(url, callback) {
@@ -26,9 +51,24 @@ function get(url, callback) {
     q.send();
 }
 
-document.getElementById('go-btn').addEventListener('click', () => {
-    var sentence = document.getElementById('sentence-inp').value;
-    var modifications = document.getElementById('modifications').value.split('\n')
+function gbid(x) {
+    return document.getElementById(x);
+}
+
+gbid('initialize').addEventListener('click', () => {
+    const network_name = gbid('network-name').value;
+    gbid('status').innerText = 'Initializing...';
+    get('/begin-modify?network=' + encodeURIComponent(network_name), (result) => {
+        result = JSON.parse(result);
+        if (result.success == true) {
+            gbid('status').innerText = 'Initialized: ' + network_name;
+        }
+    });
+});
+
+gbid('go-btn').addEventListener('click', () => {
+    var sentence = gbid('sentence-inp').value;
+    var modifications = gbid('modifications').value.split('\n')
         .filter((x) => { return x.trim().length > 1; }).map((line) =>
         {
             var pos = line.split(':')[0], val = line.split(':')[1];
@@ -38,13 +78,13 @@ document.getElementById('go-btn').addEventListener('click', () => {
         }
     );
 
-    console.log(modifications);
+    gbid("output").innerText = "Loading...";
 
     get('/modify?sentence=' + encodeURIComponent(sentence) +
             '&modifications=' + encodeURIComponent(JSON.stringify(modifications)), (result) =>
         {
             result = JSON.parse(result);
-            document.getElementById("output").innerText = result.pred;
+            gbid("output").innerText = result.pred;
         });
 
 });

@@ -1,0 +1,3 @@
+../descriptions/en-es-1.desc.t7 ../models/en-es-2m-1-model_final.t7 ../dicts/en-es-2m-1.src.dict ../dicts/en-es-2m-1.targ.dict
+../descriptions/en-es-2.desc.t7 ../models/en-es-2m-2-model_final.t7 ../dicts/en-es-2m-2.src.dict ../dicts/en-es-2m-2.targ.dict
+../descriptions/en-es-3.desc.t7 ../models/en-es-2m-3-model_final.t7 ../dicts/en-es-2m-3.src.dict ../dicts/en-es-2m-3.targ.dict
