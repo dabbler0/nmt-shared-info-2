@@ -2,7 +2,11 @@
 DISSECTION AND VISUALIZATION SERVER
 ===================================
 
-Documentation to come soon.
+Run with given arguments. An example --models file is given in models-example.txt.
+
+To run visualizations, go to `localhost:8080` (or `localhost:8080/index.html`).
+
+To run modified translations, go to `localhost:8080/modify.html`.
 
 '''
 import torch
